@@ -325,56 +325,60 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
               <span>(apuntar a hipertrofia)</span>
             </div>
 
-            <div className="flex gap-2 mb-2 items-center px-1">
-              <span className="bat-label w-6 text-center shrink-0">#</span>
-              <span className="bat-label flex-1 text-center">{unitLabel(unit)}</span>
-              <span className="bat-label flex-1 text-center">Reps</span>
-              <span className="bat-label w-10 text-center shrink-0">Done</span>
-              <span className="w-8 shrink-0"></span>
-            </div>
-
             {ex.sets.map((set, setIdx) => (
-              <div key={setIdx} className="flex gap-2 mb-2 items-center">
-                <span className="w-6 text-center text-bat-muted text-sm font-bold shrink-0">{setIdx + 1}</span>
-                <input
-                  type="number"
-                  inputMode="decimal"
-                  placeholder="0"
-                  value={set.weight !== '' && set.weight != null ? (unit === 'lb' ? kgToUnit(set.weight, 'lb').toFixed(1) : set.weight) : ''}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    updateSet(exIdx, setIdx, 'weight', v === '' ? '' : unitToKg(v, unit))
-                  }}
-                  className="bat-input flex-1 text-center text-lg font-bold py-3 min-h-[48px]"
-                />
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder={String(rec.min)}
-                  value={set.reps}
-                  onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value)}
-                  className={`bat-input flex-1 text-center text-lg font-bold py-3 min-h-[48px] ${
-                    set.reps && (parseInt(set.reps) < rec.min || parseInt(set.reps) > rec.max)
-                      ? 'border-gym-purple/30'
-                      : ''
-                  }`}
-                />
-                <button
-                  onClick={() => toggleSetDone(exIdx, setIdx)}
-                  className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition ${
-                    set.done
-                      ? 'bg-gym-green/15 text-gym-green border border-gym-green/30'
-                      : 'bg-bat-night text-bat-muted border border-bat-border'
-                  }`}
-                >
-                  {set.done ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
-                </button>
-                <button
-                  onClick={() => removeSet(exIdx, setIdx)}
-                  className="w-8 h-10 shrink-0 rounded-xl bg-bat-night border border-bat-border text-bat-muted hover:text-gym-purple hover:border-gym-purple/30 flex items-center justify-center transition"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
+              <div key={setIdx} className="bg-bat-night rounded-xl border border-bat-border p-3 mb-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="bat-label">Set {setIdx + 1}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => toggleSetDone(exIdx, setIdx)}
+                      className={`w-9 h-9 rounded-lg flex items-center justify-center transition ${
+                        set.done
+                          ? 'bg-gym-green/15 text-gym-green border border-gym-green/30'
+                          : 'bg-bat-panel text-bat-muted border border-bat-border'
+                      }`}
+                    >
+                      {set.done ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => removeSet(exIdx, setIdx)}
+                      className="w-9 h-9 rounded-lg bg-bat-panel border border-bat-border text-bat-muted hover:text-gym-purple hover:border-gym-purple/30 flex items-center justify-center transition"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="bat-label block mb-1">{unitLabel(unit)}</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={set.weight !== '' && set.weight != null ? (unit === 'lb' ? kgToUnit(set.weight, 'lb').toFixed(1) : set.weight) : ''}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        updateSet(exIdx, setIdx, 'weight', v === '' ? '' : unitToKg(v, unit))
+                      }}
+                      className="bat-input w-full text-center text-lg py-2.5 min-h-[44px]"
+                    />
+                  </div>
+                  <div>
+                    <span className="bat-label block mb-1">Reps</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      placeholder={String(rec.min)}
+                      value={set.reps}
+                      onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value)}
+                      className={`bat-input w-full text-center text-lg py-2.5 min-h-[44px] ${
+                        set.reps && (parseInt(set.reps) < rec.min || parseInt(set.reps) > rec.max)
+                          ? 'border-gym-purple/30'
+                          : ''
+                      }`}
+                    />
+                  </div>
+                </div>
               </div>
             ))}
 
