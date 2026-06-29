@@ -355,7 +355,7 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
                       type="number"
                       inputMode="decimal"
                       placeholder="0"
-                      value={set.weight !== '' && set.weight != null ? (unit === 'lb' ? kgToUnit(set.weight, 'lb').toFixed(1) : set.weight) : ''}
+                      value={set.weight !== '' && set.weight != null ? Math.round(kgToUnit(set.weight, unit)) : ''}
                       onChange={(e) => {
                         const v = e.target.value
                         updateSet(exIdx, setIdx, 'weight', v === '' ? '' : unitToKg(v, unit))

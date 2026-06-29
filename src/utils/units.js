@@ -14,7 +14,7 @@ export function unitLabel(unit) {
   return unit === 'lb' ? 'lb' : 'kg'
 }
 
-export function formatWeight(kg, unit, digits = 1) {
+export function formatWeight(kg, unit) {
   const v = kgToUnit(kg, unit)
-  return `${v.toFixed(digits)} ${unitLabel(unit)}`
+  return `${Math.round(v)} ${unitLabel(unit)}`
 }

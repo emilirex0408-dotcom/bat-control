@@ -67,7 +67,7 @@ export default function WorkoutHistory({ workouts, onDelete, muscleColors, unit 
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {ex.sets.map((set, i) => (
                         <span key={i} className="text-xs bg-bat-panel px-2 py-0.5 rounded-md text-bat-silver">
-                          {set.weight !== '' && set.weight != null ? kgToUnit(set.weight, unit).toFixed(unit === 'lb' ? 1 : 0) : 0}{unitLabel(unit)} x {set.reps} {set.done && '✓'}
+                          {set.weight !== '' && set.weight != null ? Math.round(kgToUnit(set.weight, unit)) : 0}{unitLabel(unit)} x {set.reps} {set.done && '✓'}
                         </span>
                       ))}
                     </div>
