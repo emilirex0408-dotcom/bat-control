@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Plus, Trash2, Minus, Check, X, Dumbbell, Copy, ChevronDown, ChevronUp } from 'lucide-react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { Plus, Trash2, Minus, Check, X, Dumbbell, Copy, GripVertical, Pencil, ArrowUp, ArrowDown } from 'lucide-react'
 import { EXERCISES_BY_MUSCLE, MUSCLE_COLORS } from '../../constants/exercises'
 
 const REC_RANGES = {
@@ -25,24 +25,16 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
   const [showPicker, setShowPicker] = useState(false)
   const [pickerMuscle, setPickerMuscle] = useState(null)
   const [customExercise, setCustomExercise] = useState('')
-  const [showCopyWeek, setShowCopyWeek] = useState(false)
+  const [editingExIdx, setEditingExIdx] = useState(null)
+  const [showReplacer, setShowReplacer] = useState(false)
+  const [draggedIdx, setDraggedIdx] = useState(null)
+  const [dragOverIdx, setDragOverIdx] = useState(null)
 
   useEffect(() => {
     if (existingWorkout?.exercises) {
       setExercises(existingWorkout.exercises)
     }
   }, [existingWorkout])
-
-  const allAvailableExercises = useMemo(() => {
-    const result = []
-    muscleGroups.forEach((muscle) => {
-      const list = EXERCISES_BY_MUSCLE[muscle] || []
-      list.forEach((name) => {
-        result.push({ name, muscle })
-      })
-    })
-    return result
-  }, [muscleGroups])
 
   const selectedNames = useMemo(() => new Set(exercises.map((e) => e.name)), [exercises])
 
@@ -98,6 +90,22 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
     setExercises(exercises.filter((_, i) => i !== exIdx))
   }
 
+  const replaceExercise = (exIdx, newName, newMuscle) => {
+    const updated = [...exercises]
+    updated[exIdx] = { ...updated[exIdx], name: newName, muscle: newMuscle }
+    setExercises(updated)
+    setEditingExIdx(null)
+    setShowReplacer(false)
+  }
+
+  const moveExercise = (fromIdx, toIdx) => {
+    if (fromIdx === toIdx || toIdx < 0 || toIdx >= exercises.length) return
+    const updated = [...exercises]
+    const [moved] = updated.splice(fromIdx, 1)
+    updated.splice(toIdx, 0, moved)
+    setExercises(updated)
+  }
+
   const addExercise = (name, muscle) => {
     if (selectedNames.has(name)) return
     setExercises([
@@ -147,12 +155,36 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
         sets: e.sets.map((s) => ({ weight: s.weight || '', reps: '', done: false })),
       }))
     )
-    setShowCopyWeek(false)
+  }
+
+  const handleDragStart = (idx) => {
+    setDraggedIdx(idx)
+  }
+
+  const handleDragOver = (e, idx) => {
+    e.preventDefault()
+    setDragOverIdx(idx)
+  }
+
+  const handleDrop = (e, idx) => {
+    e.preventDefault()
+    if (draggedIdx !== null) {
+      moveExercise(draggedIdx, idx)
+    }
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIdx(null)
+    setDragOverIdx(null)
   }
 
   const availableExercises = pickerMuscle
     ? EXERCISES_BY_MUSCLE[pickerMuscle] || []
     : []
+
+  const allMuscles = [...new Set([...muscleGroups, ...Object.keys(EXERCISES_BY_MUSCLE)])]
 
   return (
     <div className="space-y-4 animate-slide-up">
@@ -224,22 +256,65 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
         </button>
       )}
 
-      {/* Selected exercises */}
+      {/* Selected exercises - draggable */}
       {exercises.map((ex, exIdx) => {
         const rec = getRecRange(ex.muscle)
+        const isDragging = draggedIdx === exIdx
+        const isDragOver = dragOverIdx === exIdx && draggedIdx !== null && draggedIdx !== exIdx
         return (
-          <div key={ex.id} className="bat-card p-3">
+          <div
+            key={ex.id}
+            draggable
+            onDragStart={() => handleDragStart(exIdx)}
+            onDragOver={(e) => handleDragOver(e, exIdx)}
+            onDrop={(e) => handleDrop(e, exIdx)}
+            onDragEnd={handleDragEnd}
+            className={`bat-card p-3 transition-all ${
+              isDragging ? 'opacity-40 scale-95' : ''
+            } ${
+              isDragOver ? 'border-bat-gold ring-2 ring-bat-gold/30' : ''
+            }`}
+          >
             <div className="flex items-center justify-between mb-2">
-              <div>
-                <h3 className="font-bold text-bat-white">{ex.name}</h3>
-                <span className="text-xs" style={{ color: MUSCLE_COLORS[ex.muscle] }}>{ex.muscle}</span>
+              <div className="flex items-center gap-2 min-w-0">
+                <GripVertical className="w-4 h-4 text-bat-muted shrink-0 cursor-grab" />
+                <div className="min-w-0">
+                  <h3 className="font-bold text-bat-white truncate">{ex.name}</h3>
+                  <span className="text-xs" style={{ color: MUSCLE_COLORS[ex.muscle] }}>{ex.muscle}</span>
+                </div>
               </div>
-              <button
-                onClick={() => removeExercise(exIdx)}
-                className="text-bat-muted hover:text-gym-purple transition"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => { setEditingExIdx(exIdx); setShowReplacer(true) }}
+                  className="text-bat-muted hover:text-bat-gold transition p-1"
+                  title="Cambiar ejercicio"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => moveExercise(exIdx, exIdx - 1)}
+                  disabled={exIdx === 0}
+                  className="text-bat-muted hover:text-bat-silver transition p-1 disabled:opacity-30"
+                  title="Subir"
+                >
+                  <ArrowUp className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => moveExercise(exIdx, exIdx + 1)}
+                  disabled={exIdx === exercises.length - 1}
+                  className="text-bat-muted hover:text-bat-silver transition p-1 disabled:opacity-30"
+                  title="Bajar"
+                >
+                  <ArrowDown className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => removeExercise(exIdx)}
+                  className="text-bat-muted hover:text-gym-purple transition p-1"
+                  title="Eliminar"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <div className="text-xs text-bat-muted mb-2 flex items-center gap-2">
@@ -320,7 +395,7 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
         </button>
       )}
 
-      {/* Exercise picker modal */}
+      {/* Exercise picker modal (add new) */}
       {showPicker && (
         <div
           className="fixed inset-0 bg-bat-black/90 z-[60] flex items-end md:items-center justify-center p-4 animate-fade-in"
@@ -392,6 +467,108 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
           </div>
         </div>
       )}
+
+      {/* Exercise replacer modal */}
+      {showReplacer && editingExIdx !== null && (
+        <ExerciseReplacer
+          exercises={exercises}
+          exIdx={editingExIdx}
+          onReplace={replaceExercise}
+          onClose={() => { setShowReplacer(false); setEditingExIdx(null) }}
+        />
+      )}
+    </div>
+  )
+}
+
+function ExerciseReplacer({ exercises, exIdx, onReplace, onClose }) {
+  const currentEx = exercises[exIdx]
+  const [pickerMuscle, setPickerMuscle] = useState(currentEx?.muscle || null)
+  const [customName, setCustomName] = useState('')
+
+  if (!currentEx) return null
+
+  const availableExercises = pickerMuscle
+    ? EXERCISES_BY_MUSCLE[pickerMuscle] || []
+    : []
+
+  return (
+    <div
+      className="fixed inset-0 bg-bat-black/90 z-[60] flex items-end md:items-center justify-center p-4 animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-bat-dark border border-bat-border rounded-3xl w-full max-w-md p-5 max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="font-display text-lg text-bat-gold uppercase">Cambiar ejercicio</h3>
+          <button onClick={onClose} className="text-bat-muted hover:text-bat-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-xs text-bat-muted mb-4">
+          Actual: <span className="text-bat-white font-bold">{currentEx.name}</span>
+          <span className="ml-1" style={{ color: MUSCLE_COLORS[currentEx.muscle] }}>({currentEx.muscle})</span>
+        </p>
+
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {Object.keys(EXERCISES_BY_MUSCLE).map((muscle) => (
+            <button
+              key={muscle}
+              onClick={() => setPickerMuscle(muscle)}
+              className={`bat-badge transition ${
+                pickerMuscle === muscle
+                  ? 'text-bat-black font-bold'
+                  : 'bg-bat-panel text-bat-muted border border-bat-border'
+              }`}
+              style={pickerMuscle === muscle ? { backgroundColor: MUSCLE_COLORS[muscle] } : {}}
+            >
+              {muscle}
+            </button>
+          ))}
+        </div>
+
+        {pickerMuscle && (
+          <div className="space-y-1.5 mb-4">
+            {availableExercises.map((name) => (
+              <button
+                key={name}
+                onClick={() => onReplace(exIdx, name, pickerMuscle)}
+                className={`w-full text-left bat-card bat-card-hover py-2.5 px-3 text-sm transition ${
+                  name === currentEx.name ? 'opacity-50' : ''
+                }`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="border-t border-bat-border pt-3">
+          <p className="bat-label mb-2">Nombre personalizado</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Escribe el nombre..."
+              className="bat-input flex-1"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && customName.trim()) {
+                  onReplace(exIdx, customName.trim(), pickerMuscle || currentEx.muscle)
+                }
+              }}
+            />
+            <button
+              onClick={() => customName.trim() && onReplace(exIdx, customName.trim(), pickerMuscle || currentEx.muscle)}
+              className="bat-btn bat-btn-gold px-3"
+            >
+              <Check className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
