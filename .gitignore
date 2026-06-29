@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.local
+*.pyc
+__pycache__/
+.claude/
+data/
+debug_pdf.py
+debug_*.mjs
+test_*.mjs
+app.py
+data_store.py
+components/*.py
+parser/
+requirements.txt

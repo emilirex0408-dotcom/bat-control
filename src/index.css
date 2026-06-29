@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bat-black text-bat-white font-body antialiased;
+    overscroll-behavior: none;
+  }
+  ::selection {
+    @apply bg-bat-gold/30 text-bat-white;
+  }
+}
+
+@layer components {
+  .bat-card {
+    @apply bg-bat-dark border border-bat-border rounded-2xl p-4 transition-all duration-300;
+  }
+  .bat-card-hover {
+    @apply hover:border-bat-gold/30 hover:bg-bat-panel cursor-pointer;
+  }
+  .bat-input {
+    @apply bg-bat-night border border-bat-border rounded-xl px-3 py-2.5 text-bat-white
+           placeholder-bat-muted focus:border-bat-gold/50 focus:outline-none transition
+           text-sm font-medium;
+  }
+  .bat-btn {
+    @apply flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold transition
+           active:scale-95 text-sm;
+  }
+  .bat-btn-gold {
+    @apply bg-bat-gold text-bat-black hover:bg-bat-goldDark shadow-bat;
+  }
+  .bat-btn-ghost {
+    @apply bg-bat-panel text-bat-light border border-bat-border hover:border-bat-gold/30;
+  }
+  .bat-btn-danger {
+    @apply bg-gym-red/10 text-gym-red border border-gym-red/20 hover:bg-gym-red/20;
+  }
+  .bat-label {
+    @apply text-bat-muted text-xs font-semibold uppercase tracking-wider;
+  }
+  .bat-badge {
+    @apply text-xs font-semibold px-2.5 py-1 rounded-full;
+  }
+  .font-display {
+    font-family: 'Anton', sans-serif;
+    letter-spacing: 0.025em;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-bat-border rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-bat-gold/30;
+}
