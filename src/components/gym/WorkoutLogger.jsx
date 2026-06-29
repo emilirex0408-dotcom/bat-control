@@ -325,17 +325,17 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
               <span>(apuntar a hipertrofia)</span>
             </div>
 
-            <div className="grid grid-cols-12 gap-1 mb-2 px-1">
-              <span className="col-span-1 bat-label text-center">#</span>
-              <span className="col-span-4 bat-label text-center">{unitLabel(unit)}</span>
-              <span className="col-span-4 bat-label text-center">Reps</span>
-              <span className="col-span-2 bat-label text-center">Done</span>
-              <span className="col-span-1"></span>
+            <div className="flex gap-2 mb-2 items-center px-1">
+              <span className="bat-label w-6 text-center shrink-0">#</span>
+              <span className="bat-label flex-1 text-center">{unitLabel(unit)}</span>
+              <span className="bat-label flex-1 text-center">Reps</span>
+              <span className="bat-label w-10 text-center shrink-0">Done</span>
+              <span className="w-8 shrink-0"></span>
             </div>
 
             {ex.sets.map((set, setIdx) => (
-              <div key={setIdx} className="grid grid-cols-12 gap-1 mb-1.5 items-center">
-                <span className="col-span-1 text-center text-bat-muted text-sm font-bold">{setIdx + 1}</span>
+              <div key={setIdx} className="flex gap-2 mb-2 items-center">
+                <span className="w-6 text-center text-bat-muted text-sm font-bold shrink-0">{setIdx + 1}</span>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -345,7 +345,7 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
                     const v = e.target.value
                     updateSet(exIdx, setIdx, 'weight', v === '' ? '' : unitToKg(v, unit))
                   }}
-                  className="col-span-4 bat-input text-center py-1.5"
+                  className="bat-input flex-1 text-center text-lg font-bold py-3 min-h-[48px]"
                 />
                 <input
                   type="number"
@@ -353,7 +353,7 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
                   placeholder={String(rec.min)}
                   value={set.reps}
                   onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value)}
-                  className={`col-span-4 bat-input text-center py-1.5 ${
+                  className={`bat-input flex-1 text-center text-lg font-bold py-3 min-h-[48px] ${
                     set.reps && (parseInt(set.reps) < rec.min || parseInt(set.reps) > rec.max)
                       ? 'border-gym-purple/30'
                       : ''
@@ -361,13 +361,17 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
                 />
                 <button
                   onClick={() => toggleSetDone(exIdx, setIdx)}
-                  className={`col-span-2 ${set.done ? 'text-gym-green' : 'text-bat-muted'}`}
+                  className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center transition ${
+                    set.done
+                      ? 'bg-gym-green/15 text-gym-green border border-gym-green/30'
+                      : 'bg-bat-night text-bat-muted border border-bat-border'
+                  }`}
                 >
-                  {set.done ? <Check className="w-5 h-5 mx-auto" /> : <X className="w-5 h-5 mx-auto" />}
+                  {set.done ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
                 </button>
                 <button
                   onClick={() => removeSet(exIdx, setIdx)}
-                  className="col-span-1 text-bat-muted hover:text-gym-purple flex justify-center"
+                  className="w-8 h-10 shrink-0 rounded-xl bg-bat-night border border-bat-border text-bat-muted hover:text-gym-purple hover:border-gym-purple/30 flex items-center justify-center transition"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
