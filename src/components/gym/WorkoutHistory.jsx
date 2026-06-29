@@ -71,6 +71,11 @@ export default function WorkoutHistory({ workouts, onDelete, muscleColors, unit 
                         </span>
                       ))}
                     </div>
+                    {ex.notes && (
+                      <p className="text-xs text-bat-muted mt-1.5 italic border-l-2 border-bat-gold/30 pl-2">
+                        {ex.notes}
+                      </p>
+                    )}
                   </div>
                 ))}
                 <button

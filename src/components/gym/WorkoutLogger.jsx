@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Plus, Trash2, Minus, Check, X, Dumbbell, Copy, GripVertical, Pencil, ArrowUp, ArrowDown, SplitSquareHorizontal } from 'lucide-react'
+import { Plus, Trash2, Minus, Check, X, Dumbbell, Copy, GripVertical, Pencil, ArrowUp, ArrowDown, SplitSquareHorizontal, StickyNote } from 'lucide-react'
 import { EXERCISES_BY_MUSCLE, MUSCLE_COLORS } from '../../constants/exercises'
 import { kgToUnit, unitToKg, unitLabel } from '../../utils/units'
 
@@ -122,6 +122,8 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
     setExercises(exercises.filter((_, i) => i !== exIdx))
   }
 
+  const [showNotes, setShowNotes] = useState({})
+
   const toggleUnilateral = (exIdx) => {
     const updated = [...exercises]
     const ex = { ...updated[exIdx] }
@@ -134,6 +136,12 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
       }))
     }
     updated[exIdx] = ex
+    setExercises(updated)
+  }
+
+  const updateExerciseNotes = (exIdx, notes) => {
+    const updated = [...exercises]
+    updated[exIdx] = { ...updated[exIdx], notes }
     setExercises(updated)
   }
 
@@ -200,6 +208,7 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
         name: e.name,
         muscle: e.muscle,
         unilateral: e.unilateral || false,
+        notes: e.notes || '',
         sets: e.sets.map((s) => ({
           weight: s.weight || '',
           reps: '',
@@ -339,6 +348,19 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
+                  onClick={() => setShowNotes((s) => ({ ...s, [ex.id]: !s[ex.id] }))}
+                  className={`px-1.5 h-7 rounded-md text-[10px] font-bold transition flex items-center gap-1 ${
+                    ex.notes
+                      ? 'bg-bat-gold/15 text-bat-gold border border-bat-gold/30'
+                      : showNotes[ex.id]
+                        ? 'bg-bat-panel text-bat-silver border border-bat-border'
+                        : 'bg-bat-panel text-bat-muted border border-bat-border'
+                  }`}
+                  title="Notas"
+                >
+                  <StickyNote className="w-3.5 h-3.5" />
+                </button>
+                <button
                   onClick={() => toggleUnilateral(exIdx)}
                   className={`px-2 h-7 rounded-md text-[10px] font-bold transition flex items-center gap-1 ${
                     ex.unilateral
@@ -382,6 +404,16 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
                 </button>
               </div>
             </div>
+
+            {showNotes[ex.id] && (
+              <textarea
+                value={ex.notes || ''}
+                onChange={(e) => updateExerciseNotes(exIdx, e.target.value)}
+                placeholder="Notas del ejercicio..."
+                className="bat-input w-full text-sm mb-2 min-h-[44px] resize-none"
+                rows={2}
+              />
+            )}
 
             <div className="text-xs text-bat-muted mb-2 flex items-center gap-2">
               <span className="bg-bat-night px-2 py-0.5 rounded-md border border-bat-border">
