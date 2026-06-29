@@ -60,7 +60,7 @@ export default function GymApp() {
     return { totalWorkouts, totalVolume, last7Count: last7.length, musclesTrained: muscleGroups.size }
   }, [workouts])
 
-  const saveWorkout = (workout) => {
+  const saveWorkout = (workout, silent = false) => {
     const existing = workouts.findIndex((w) => w.date === workout.date)
     if (existing !== -1) {
       const updated = [...workouts]
@@ -69,7 +69,7 @@ export default function GymApp() {
     } else {
       setWorkouts([workout, ...workouts])
     }
-    setView('history')
+    if (!silent) setView('history')
   }
 
   const deleteWorkout = (id) => {

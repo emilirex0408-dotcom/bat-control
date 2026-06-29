@@ -30,12 +30,38 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
   const [showReplacer, setShowReplacer] = useState(false)
   const [draggedIdx, setDraggedIdx] = useState(null)
   const [dragOverIdx, setDragOverIdx] = useState(null)
+  const [savedFlash, setSavedFlash] = useState(false)
+  const firstRender = useRef(true)
+  const debounceRef = useRef(null)
 
   useEffect(() => {
     if (existingWorkout?.exercises) {
       setExercises(existingWorkout.exercises)
     }
   }, [existingWorkout])
+
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    if (exercises.length === 0) return
+
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+
+    debounceRef.current = setTimeout(() => {
+      onSave({
+        id: existingWorkout?.id || Date.now(),
+        date,
+        muscleGroups,
+        exercises: exercises.filter((e) => e.sets.length > 0),
+      }, true)
+      setSavedFlash(true)
+      setTimeout(() => setSavedFlash(false), 1500)
+    }, 800)
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [exercises])
 
   const selectedNames = useMemo(() => new Set(exercises.map((e) => e.name)), [exercises])
 
@@ -491,11 +517,18 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
         <Plus className="w-4 h-4" /> Agregar ejercicio personalizado
       </button>
 
-      {/* Save button */}
+      {/* Auto-save indicator + Finish button */}
       {exercises.length > 0 && (
-        <button onClick={handleSave} className="w-full bat-btn bat-btn-gold">
-          <Check className="w-4 h-4" /> Guardar entrenamiento
-        </button>
+        <div className="space-y-2">
+          {savedFlash && (
+            <div className="flex items-center justify-center gap-1.5 text-xs text-gym-green animate-fade-in">
+              <Check className="w-3.5 h-3.5" /> Guardado automaticamente
+            </div>
+          )}
+          <button onClick={handleSave} className="w-full bat-btn bat-btn-gold">
+            <Check className="w-4 h-4" /> Terminar
+          </button>
+        </div>
       )}
 
       {/* Exercise picker modal (add new) */}
