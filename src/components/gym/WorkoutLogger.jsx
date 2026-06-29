@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Plus, Trash2, Minus, Check, X, Dumbbell, Copy, GripVertical, Pencil, ArrowUp, ArrowDown } from 'lucide-react'
+import { Plus, Trash2, Minus, Check, X, Dumbbell, Copy, GripVertical, Pencil, ArrowUp, ArrowDown, SplitSquareHorizontal } from 'lucide-react'
 import { EXERCISES_BY_MUSCLE, MUSCLE_COLORS } from '../../constants/exercises'
 import { kgToUnit, unitToKg, unitLabel } from '../../utils/units'
 
@@ -70,11 +70,16 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
   const addSet = (exIdx) => {
     const updated = [...exercises]
     const lastSet = updated[exIdx].sets[updated[exIdx].sets.length - 1]
-    updated[exIdx].sets.push({
+    const newSet = {
       weight: lastSet?.weight || '',
       reps: lastSet?.reps || '',
       done: false,
-    })
+    }
+    if (updated[exIdx].unilateral) {
+      newSet.weightR = lastSet?.weightR ?? ''
+      newSet.repsR = lastSet?.repsR ?? ''
+    }
+    updated[exIdx].sets.push(newSet)
     setExercises(updated)
   }
 
@@ -89,6 +94,21 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
 
   const removeExercise = (exIdx) => {
     setExercises(exercises.filter((_, i) => i !== exIdx))
+  }
+
+  const toggleUnilateral = (exIdx) => {
+    const updated = [...exercises]
+    const ex = { ...updated[exIdx] }
+    ex.unilateral = !ex.unilateral
+    if (ex.unilateral) {
+      ex.sets = ex.sets.map((s) => ({
+        ...s,
+        weightR: s.weightR ?? '',
+        repsR: s.repsR ?? '',
+      }))
+    }
+    updated[exIdx] = ex
+    setExercises(updated)
   }
 
   const replaceExercise = (exIdx, newName, newMuscle) => {
@@ -153,7 +173,14 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
         id: Date.now() + Math.random(),
         name: e.name,
         muscle: e.muscle,
-        sets: e.sets.map((s) => ({ weight: s.weight || '', reps: '', done: false })),
+        unilateral: e.unilateral || false,
+        sets: e.sets.map((s) => ({
+          weight: s.weight || '',
+          reps: '',
+          done: false,
+          weightR: e.unilateral ? (s.weightR ?? '') : undefined,
+          repsR: e.unilateral ? '' : undefined,
+        })),
       }))
     )
   }
@@ -286,6 +313,18 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
+                  onClick={() => toggleUnilateral(exIdx)}
+                  className={`px-2 h-7 rounded-md text-[10px] font-bold transition flex items-center gap-1 ${
+                    ex.unilateral
+                      ? 'bg-bat-gold text-bat-black'
+                      : 'bg-bat-panel text-bat-muted border border-bat-border'
+                  }`}
+                  title="Unilateral (L/R)"
+                >
+                  <SplitSquareHorizontal className="w-3.5 h-3.5" />
+                  L|R
+                </button>
+                <button
                   onClick={() => { setEditingExIdx(exIdx); setShowReplacer(true) }}
                   className="text-bat-muted hover:text-bat-gold transition p-1"
                   title="Cambiar ejercicio"
@@ -348,37 +387,89 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
                     </button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="bat-label block mb-1">{unitLabel(unit)}</span>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      placeholder="0"
-                      value={set.weight !== '' && set.weight != null ? Math.round(kgToUnit(set.weight, unit)) : ''}
-                      onChange={(e) => {
-                        const v = e.target.value
-                        updateSet(exIdx, setIdx, 'weight', v === '' ? '' : unitToKg(v, unit))
-                      }}
-                      className="bat-input w-full text-center text-lg py-2.5 min-h-[44px]"
-                    />
+
+                {ex.unilateral ? (
+                  <div className="space-y-2">
+                    {['L', 'R'].map((side) => {
+                      const wField = side === 'L' ? 'weight' : 'weightR'
+                      const rField = side === 'L' ? 'reps' : 'repsR'
+                      const wVal = side === 'L' ? set.weight : set.weightR
+                      const rVal = side === 'L' ? set.reps : set.repsR
+                      return (
+                        <div key={side}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`bat-badge text-[10px] ${side === 'L' ? 'bg-bat-panel text-bat-silver' : 'bg-bat-gold/15 text-bat-gold'}`}>
+                              {side === 'L' ? 'Izq' : 'Der'}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <span className="bat-label block mb-1">{unitLabel(unit)}</span>
+                              <input
+                                type="number"
+                                inputMode="decimal"
+                                placeholder="0"
+                                value={wVal !== '' && wVal != null ? Math.round(kgToUnit(wVal, unit)) : ''}
+                                onChange={(e) => {
+                                  const v = e.target.value
+                                  updateSet(exIdx, setIdx, wField, v === '' ? '' : unitToKg(v, unit))
+                                }}
+                                className="bat-input w-full text-center text-base py-2.5 min-h-[44px]"
+                              />
+                            </div>
+                            <div>
+                              <span className="bat-label block mb-1">Reps</span>
+                              <input
+                                type="number"
+                                inputMode="numeric"
+                                placeholder={String(rec.min)}
+                                value={rVal ?? ''}
+                                onChange={(e) => updateSet(exIdx, setIdx, rField, e.target.value)}
+                                className={`bat-input w-full text-center text-base py-2.5 min-h-[44px] ${
+                                  rVal && (parseInt(rVal) < rec.min || parseInt(rVal) > rec.max)
+                                    ? 'border-gym-purple/30'
+                                    : ''
+                                }`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
-                  <div>
-                    <span className="bat-label block mb-1">Reps</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      placeholder={String(rec.min)}
-                      value={set.reps}
-                      onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value)}
-                      className={`bat-input w-full text-center text-lg py-2.5 min-h-[44px] ${
-                        set.reps && (parseInt(set.reps) < rec.min || parseInt(set.reps) > rec.max)
-                          ? 'border-gym-purple/30'
-                          : ''
-                      }`}
-                    />
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="bat-label block mb-1">{unitLabel(unit)}</span>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        placeholder="0"
+                        value={set.weight !== '' && set.weight != null ? Math.round(kgToUnit(set.weight, unit)) : ''}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          updateSet(exIdx, setIdx, 'weight', v === '' ? '' : unitToKg(v, unit))
+                        }}
+                        className="bat-input w-full text-center text-lg py-2.5 min-h-[44px]"
+                      />
+                    </div>
+                    <div>
+                      <span className="bat-label block mb-1">Reps</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        placeholder={String(rec.min)}
+                        value={set.reps}
+                        onChange={(e) => updateSet(exIdx, setIdx, 'reps', e.target.value)}
+                        className={`bat-input w-full text-center text-lg py-2.5 min-h-[44px] ${
+                          set.reps && (parseInt(set.reps) < rec.min || parseInt(set.reps) > rec.max)
+                            ? 'border-gym-purple/30'
+                            : ''
+                        }`}
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
 

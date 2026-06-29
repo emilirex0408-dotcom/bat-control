@@ -2,7 +2,7 @@ import { Trash2, Dumbbell, ChevronDown, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { formatDate } from '../../utils/formatters'
 import { MUSCLE_COLORS } from '../../constants/exercises'
-import { kgToUnit, unitLabel } from '../../utils/units'
+import { kgToUnit, unitLabel, setVolume, formatSetLine } from '../../utils/units'
 
 export default function WorkoutHistory({ workouts, onDelete, muscleColors, unit = 'kg' }) {
   const [expanded, setExpanded] = useState(null)
@@ -21,7 +21,7 @@ export default function WorkoutHistory({ workouts, onDelete, muscleColors, unit 
     <div className="space-y-3 animate-fade-in">
       {workouts.map((w) => {
         const totalVolume = w.exercises.reduce(
-          (sum, e) => sum + e.sets.reduce((s, set) => s + (Number(set.weight) * Number(set.reps) || 0), 0),
+          (sum, e) => sum + e.sets.reduce((s, set) => s + setVolume(set), 0),
           0
         )
         const totalVolumeDisplay = totalVolume ? kgToUnit(totalVolume, unit) : 0
@@ -67,7 +67,7 @@ export default function WorkoutHistory({ workouts, onDelete, muscleColors, unit 
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {ex.sets.map((set, i) => (
                         <span key={i} className="text-xs bg-bat-panel px-2 py-0.5 rounded-md text-bat-silver">
-                          {set.weight !== '' && set.weight != null ? Math.round(kgToUnit(set.weight, unit)) : 0}{unitLabel(unit)} x {set.reps} {set.done && '✓'}
+                          {formatSetLine(set, unit)}
                         </span>
                       ))}
                     </div>

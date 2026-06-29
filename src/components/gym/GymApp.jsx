@@ -4,7 +4,7 @@ import { ROUTINE, MUSCLE_COLORS } from '../../constants/exercises'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
 import { getDayOfWeek, getTodayStr } from '../../utils/formatters'
 import { useAuth } from '../../context/AuthContext'
-import { kgToUnit, unitLabel } from '../../utils/units'
+import { kgToUnit, unitLabel, setVolume } from '../../utils/units'
 import WorkoutLogger from './WorkoutLogger'
 import WorkoutHistory from './WorkoutHistory'
 import RoutineView from './RoutineView'
@@ -44,7 +44,7 @@ export default function GymApp() {
     const totalWorkouts = workouts.length
     const totalVolumeKg = workouts.reduce((sum, w) => {
       return sum + w.exercises.reduce((s, e) => {
-        return s + e.sets.reduce((ss, set) => ss + (Number(set.weight) * Number(set.reps) || 0), 0)
+        return s + e.sets.reduce((ss, set) => ss + setVolume(set), 0)
       }, 0)
     }, 0)
     const totalVolume = kgToUnit(totalVolumeKg, unit)
