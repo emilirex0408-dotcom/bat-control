@@ -1,12 +1,16 @@
 import { Dumbbell, CreditCard, Landmark } from 'lucide-react'
 import BatLogo from './BatLogo'
+import { useAuth } from '../../context/AuthContext'
 
 export default function BottomNav({ activeTab, onTabChange }) {
+  const { currentUser } = useAuth()
+  const isAdmin = currentUser?.role === 'admin'
+
   const tabs = [
     { id: 'gym', label: 'Gym', icon: Dumbbell },
-    { id: 'expenses', label: 'Credito', icon: CreditCard },
-    { id: 'debit', label: 'Debito', icon: Landmark },
-  ]
+    { id: 'expenses', label: 'Credito', icon: CreditCard, adminOnly: true },
+    { id: 'debit', label: 'Debito', icon: Landmark, adminOnly: true },
+  ].filter((t) => !t.adminOnly || isAdmin)
 
   return (
     <>

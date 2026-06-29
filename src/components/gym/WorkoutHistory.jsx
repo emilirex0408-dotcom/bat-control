@@ -2,8 +2,9 @@ import { Trash2, Dumbbell, ChevronDown, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { formatDate } from '../../utils/formatters'
 import { MUSCLE_COLORS } from '../../constants/exercises'
+import { kgToUnit, unitLabel } from '../../utils/units'
 
-export default function WorkoutHistory({ workouts, onDelete, muscleColors }) {
+export default function WorkoutHistory({ workouts, onDelete, muscleColors, unit = 'kg' }) {
   const [expanded, setExpanded] = useState(null)
 
   if (workouts.length === 0) {
@@ -23,6 +24,8 @@ export default function WorkoutHistory({ workouts, onDelete, muscleColors }) {
           (sum, e) => sum + e.sets.reduce((s, set) => s + (Number(set.weight) * Number(set.reps) || 0), 0),
           0
         )
+        const totalVolumeDisplay = totalVolume ? kgToUnit(totalVolume, unit) : 0
+        const volumeUnit = unitLabel(unit)
         const totalSets = w.exercises.reduce((sum, e) => sum + e.sets.length, 0)
 
         return (
@@ -50,7 +53,7 @@ export default function WorkoutHistory({ workouts, onDelete, muscleColors }) {
               <div className="text-right flex items-center gap-2">
                 <div>
                   <p className="text-xs text-bat-muted">{totalSets} sets</p>
-                  <p className="text-sm font-bold text-bat-gold">{(totalVolume / 1000).toFixed(1)}k kg</p>
+                  <p className="text-sm font-bold text-bat-gold">{(totalVolumeDisplay / 1000).toFixed(1)}k {volumeUnit}</p>
                 </div>
                 {expanded === w.id ? <ChevronDown className="w-5 h-5 text-bat-muted" /> : <ChevronRight className="w-5 h-5 text-bat-muted" />}
               </div>
@@ -64,7 +67,7 @@ export default function WorkoutHistory({ workouts, onDelete, muscleColors }) {
                     <div className="flex flex-wrap gap-1.5 mt-1">
                       {ex.sets.map((set, i) => (
                         <span key={i} className="text-xs bg-bat-panel px-2 py-0.5 rounded-md text-bat-silver">
-                          {set.weight}kg x {set.reps} {set.done && '✓'}
+                          {set.weight !== '' && set.weight != null ? kgToUnit(set.weight, unit).toFixed(unit === 'lb' ? 1 : 0) : 0}{unitLabel(unit)} x {set.reps} {set.done && '✓'}
                         </span>
                       ))}
                     </div>

@@ -1,16 +1,35 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Flame, Calendar, ClipboardList, TrendingUp, Plus, Check } from 'lucide-react'
 import { ROUTINE, MUSCLE_COLORS } from '../../constants/exercises'
 import { useLocalStorage } from '../../hooks/useLocalStorage'
-import { getDayOfWeek, getTodayStr, formatDate } from '../../utils/formatters'
+import { getDayOfWeek, getTodayStr } from '../../utils/formatters'
+import { useAuth } from '../../context/AuthContext'
+import { kgToUnit, unitLabel } from '../../utils/units'
 import WorkoutLogger from './WorkoutLogger'
 import WorkoutHistory from './WorkoutHistory'
 import RoutineView from './RoutineView'
 import BatLogo from '../shared/BatLogo'
 
 export default function GymApp() {
+  const { currentUser } = useAuth()
   const [view, setView] = useState('today')
-  const [workouts, setWorkouts] = useLocalStorage('bat_gym_workouts', [])
+  const storageKey = `bat_gym_workouts_${currentUser.id}`
+
+  const [workouts, setWorkouts] = useLocalStorage(storageKey, [])
+
+  useEffect(() => {
+    const legacy = localStorage.getItem('bat_gym_workouts')
+    if (legacy && currentUser.id === 'emiliano') {
+      try {
+        const parsed = JSON.parse(legacy)
+        if (Array.isArray(parsed) && parsed.length > 0 && !localStorage.getItem(storageKey)) {
+          setWorkouts(parsed)
+        }
+      } catch {}
+    }
+  }, [storageKey, currentUser.id, setWorkouts])
+
+  const unit = currentUser.unit || 'kg'
 
   const today = getDayOfWeek()
   const todayRoutine = ROUTINE[today]
@@ -23,11 +42,12 @@ export default function GymApp() {
 
   const stats = useMemo(() => {
     const totalWorkouts = workouts.length
-    const totalVolume = workouts.reduce((sum, w) => {
+    const totalVolumeKg = workouts.reduce((sum, w) => {
       return sum + w.exercises.reduce((s, e) => {
-        return s + e.sets.reduce((ss, set) => ss + (set.weight * set.reps), 0)
+        return s + e.sets.reduce((ss, set) => ss + (Number(set.weight) * Number(set.reps) || 0), 0)
       }, 0)
     }, 0)
+    const totalVolume = kgToUnit(totalVolumeKg, unit)
 
     const last7 = workouts.filter((w) => {
       const d = new Date(w.date)
@@ -81,7 +101,7 @@ export default function GymApp() {
           <span className="font-display text-2xl text-bat-white">
             {(stats.totalVolume / 1000).toFixed(1)}k
           </span>
-          <span className="text-[10px] text-bat-muted uppercase">Volumen kg total</span>
+          <span className="text-[10px] text-bat-muted uppercase">Volumen {unitLabel(unit)} total</span>
         </div>
         <div className="bat-card flex flex-col items-center text-center">
           <Check className="w-5 h-5 text-bat-gold mb-1" />
@@ -131,6 +151,7 @@ export default function GymApp() {
               existingWorkout={todaysWorkout}
               onSave={saveWorkout}
               workouts={workouts}
+              unit={unit}
             />
           ) : (
             <div className="bat-card text-center py-12">
@@ -146,6 +167,7 @@ export default function GymApp() {
           workouts={workouts}
           onDelete={deleteWorkout}
           muscleColors={MUSCLE_COLORS}
+          unit={unit}
         />
       )}
 

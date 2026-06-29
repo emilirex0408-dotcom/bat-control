@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Plus, Trash2, Minus, Check, X, Dumbbell, Copy, GripVertical, Pencil, ArrowUp, ArrowDown } from 'lucide-react'
 import { EXERCISES_BY_MUSCLE, MUSCLE_COLORS } from '../../constants/exercises'
+import { kgToUnit, unitToKg, unitLabel } from '../../utils/units'
 
 const REC_RANGES = {
   Pecho: { min: 6, max: 12 },
@@ -17,7 +18,7 @@ function getRecRange(muscle) {
   return REC_RANGES[muscle] || { min: 8, max: 12 }
 }
 
-export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onSave, workouts }) {
+export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onSave, workouts, unit = 'kg' }) {
   const [exercises, setExercises] = useState(
     existingWorkout?.exercises || []
   )
@@ -326,7 +327,7 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
 
             <div className="grid grid-cols-12 gap-1 mb-2 px-1">
               <span className="col-span-1 bat-label text-center">#</span>
-              <span className="col-span-4 bat-label text-center">Kg</span>
+              <span className="col-span-4 bat-label text-center">{unitLabel(unit)}</span>
               <span className="col-span-4 bat-label text-center">Reps</span>
               <span className="col-span-2 bat-label text-center">Done</span>
               <span className="col-span-1"></span>
@@ -339,8 +340,11 @@ export default function WorkoutLogger({ date, muscleGroups, existingWorkout, onS
                   type="number"
                   inputMode="decimal"
                   placeholder="0"
-                  value={set.weight}
-                  onChange={(e) => updateSet(exIdx, setIdx, 'weight', e.target.value)}
+                  value={set.weight !== '' && set.weight != null ? (unit === 'lb' ? kgToUnit(set.weight, 'lb').toFixed(1) : set.weight) : ''}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    updateSet(exIdx, setIdx, 'weight', v === '' ? '' : unitToKg(v, unit))
+                  }}
                   className="col-span-4 bat-input text-center py-1.5"
                 />
                 <input
